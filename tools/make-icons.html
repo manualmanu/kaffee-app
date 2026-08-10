@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<title>Icon-Generator</title>
+</head>
+<body>
+<h1>Kaffee-App Icon-Generator</h1>
+<p>Einmaliges Dev-Tool, kein Teil der App. Klicke "Generieren", dann jede Datei herunterladen und im <code>icons/</code>-Ordner unter dem angegebenen Namen ablegen.</p>
+<button id="go">Generieren</button>
+<div id="out"></div>
+<script>
+const SIZES = [
+  { name: 'icon-192.png', size: 192 },
+  { name: 'icon-512.png', size: 512 },
+  { name: 'icon-512-maskable.png', size: 512 },
+  { name: 'apple-touch-icon-180.png', size: 180 },
+  { name: 'apple-touch-icon-167.png', size: 167 },
+  { name: 'apple-touch-icon-152.png', size: 152 },
+  { name: 'favicon-32.png', size: 32 },
+];
+
+document.getElementById('go').addEventListener('click', async () => {
+  const out = document.getElementById('out');
+  out.innerHTML = '';
+  const img = new Image();
+  img.src = '../icons/icon.svg';
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; });
+  for (const { name, size } of SIZES) {
+    const canvas = document.createElement('canvas');
+    canvas.width = size; canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(img, 0, 0, size, size);
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.href = url; a.download = name; a.textContent = 'Download ' + name;
+    a.style.display = 'block';
+    a.style.margin = '6px 0';
+    out.appendChild(a);
+  }
+});
+</script>
+</body>
+</html>

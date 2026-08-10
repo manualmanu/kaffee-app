@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="_ds/modernist-cd25f1e4-a127-4eb7-9371-edc14db7176d/styles.css">
+  <script src="_ds/modernist-cd25f1e4-a127-4eb7-9371-edc14db7176d/_ds_bundle.js"></script>
+  <style>
+    body { margin: 0; }
+    a { color: var(--color-accent); }
+    a:hover { color: var(--color-accent-700); }
+    @keyframes screenIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes numberIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</helmet>
+<div style="min-height: 100vh; display: flex; align-items: center; justify-content: center; background: var(--color-neutral-300); padding: 40px; font-family: var(--font-body); box-sizing: border-box;">
+<x-import component-from-global-scope="IOSDevice" from="./ios-frame.jsx" hint-size="402px,874px">
+<div style="height: 100%; display: flex; flex-direction: column; background: var(--color-bg); color: var(--color-text); overflow: hidden;">
+<div style="flex: 1; overflow-y: auto; padding-top: 54px; padding-bottom: 40px; display: flex; flex-direction: column;">
+
+<sc-if value="{{ isHome }}" hint-placeholder-val="{{ true }}">
+<div data-screen-label="Home" style="display: flex; flex-direction: column; flex: 1; animation: screenIn .32s cubic-bezier(.2,.8,.2,1) both;">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; margin: 16px 20px 0;">
+    <div style="font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--color-accent-700); font-weight: 600;">Kaffee</div>
+    <button onClick="{{ goHistory }}" aria-label="Verlauf" style="width: 36px; height: 36px; flex-shrink: 0; border: 1px solid var(--color-divider); background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; border-radius: 0; transition: background .15s ease;" style-hover="background: var(--color-neutral-200);" style-active="opacity: 0.6;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--color-text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 3"></path></svg>
+    </button>
+  </div>
+  <h2 style="margin: 14px 20px 20px; font-size: 26px; font-family: var(--font-heading); font-weight: 800;">Methode wählen</h2>
+  <div>
+    <sc-for list="{{ methods }}" as="m" hint-placeholder-count="3">
+      <div onClick="{{ m.select }}" style="display: flex; align-items: center; gap: 14px; padding: 18px 20px; border-bottom: 1px solid var(--color-divider); cursor: pointer; transition: background .15s ease;" style-hover="background: var(--color-neutral-200);" style-active="background: var(--color-neutral-300);">
+        <div style="width: 42px; height: 42px; flex-shrink: 0; background: var(--color-accent-100); color: var(--color-accent-800); display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; font-family: var(--font-heading);">{{ m.mono }}</div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 17px; font-weight: 800; font-family: var(--font-heading);">{{ m.name }}</div>
+          <div style="font-size: 12.5px; color: var(--color-text); opacity: 0.6; margin-top: 2px;">{{ m.desc }}</div>
+        </div>
+        <svg width="9" height="15" viewBox="0 0 9 15" fill="none" style="flex-shrink: 0; opacity: 0.35;"><path d="M1 1l6 6-6 6" stroke="var(--color-text)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isVariant }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Rezept" style="display: flex; flex-direction: column; flex: 1; animation: screenIn .32s cubic-bezier(.2,.8,.2,1) both;">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; margin: 16px 20px 0;">
+    <button onClick="{{ back }}" aria-label="Zurück" style="width: 36px; height: 36px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: -8px; transition: opacity .12s ease;" style-hover="opacity: 0.6;" style-active="opacity: 0.4;">
+      <svg width="11" height="18" viewBox="0 0 11 18" fill="none"><path d="M9 1L1 9l8 8" stroke="var(--color-text)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text); opacity: 0.55; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; margin-left: 12px;">{{ methodName }}</div>
+  </div>
+  <h2 style="margin: 14px 20px 20px; font-size: 26px; font-family: var(--font-heading); font-weight: 800;">Rezept wählen</h2>
+  <div>
+    <sc-for list="{{ variants }}" as="v" hint-placeholder-count="3">
+      <div onClick="{{ v.select }}" style="display: flex; align-items: center; gap: 16px; padding: 18px 20px; border-bottom: 1px solid var(--color-divider); cursor: pointer; transition: background .15s ease;" style-hover="background: var(--color-neutral-200);" style-active="background: var(--color-neutral-300);">
+        <div style="width: 52px; flex-shrink: 0; font-size: 21px; font-weight: 800; font-family: var(--font-heading); color: var(--color-accent-700);">{{ v.label }}</div>
+        <div style="flex: 1; min-width: 0;">
+          <div style="font-size: 16px; font-weight: 800; font-family: var(--font-heading);">{{ v.sub }}</div>
+          <div style="font-size: 12px; color: var(--color-text); opacity: 0.6; margin-top: 2px;">{{ v.meta }}</div>
+        </div>
+        <svg width="9" height="15" viewBox="0 0 9 15" fill="none" style="flex-shrink: 0; opacity: 0.35;"><path d="M1 1l6 6-6 6" stroke="var(--color-text)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isBean }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Bohne" style="display: flex; flex-direction: column; flex: 1; animation: screenIn .32s cubic-bezier(.2,.8,.2,1) both;">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; margin: 16px 20px 0;">
+    <button onClick="{{ back }}" aria-label="Zurück" style="width: 36px; height: 36px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: -8px; transition: opacity .12s ease;" style-hover="opacity: 0.6;" style-active="opacity: 0.4;">
+      <svg width="11" height="18" viewBox="0 0 11 18" fill="none"><path d="M9 1L1 9l8 8" stroke="var(--color-text)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text); opacity: 0.55; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; margin-left: 12px;">{{ breadcrumb }}</div>
+  </div>
+  <h2 style="margin: 14px 20px 20px; font-size: 26px; font-family: var(--font-heading); font-weight: 800;">Bohne wählen</h2>
+  <div>
+    <sc-for list="{{ beans }}" as="b" hint-placeholder-count="2">
+      <div onClick="{{ b.select }}" style="display: flex; flex-direction: column; gap: 4px; padding: 18px 20px; border-bottom: 1px solid var(--color-divider); cursor: pointer; transition: background .15s ease;" style-hover="background: var(--color-neutral-200);" style-active="background: var(--color-neutral-300);">
+        <div style="font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--color-accent-700); font-weight: 600;">{{ b.roaster }}</div>
+        <div style="font-size: 17px; font-weight: 800; font-family: var(--font-heading);">{{ b.name }}</div>
+        <div style="font-size: 12.5px; color: var(--color-text); opacity: 0.6;">{{ b.meta }}</div>
+      </div>
+    </sc-for>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAmount }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Menge" style="display: flex; flex-direction: column; flex: 1; animation: screenIn .32s cubic-bezier(.2,.8,.2,1) both;">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; margin: 16px 20px 0;">
+    <button onClick="{{ back }}" aria-label="Zurück" style="width: 36px; height: 36px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: -8px; transition: opacity .12s ease;" style-hover="opacity: 0.6;" style-active="opacity: 0.4;">
+      <svg width="11" height="18" viewBox="0 0 11 18" fill="none"><path d="M9 1L1 9l8 8" stroke="var(--color-text)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text); opacity: 0.55; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; margin-left: 12px;">{{ breadcrumb }}</div>
+  </div>
+  <h2 style="margin: 14px 20px 20px; font-size: 26px; font-family: var(--font-heading); font-weight: 800;">Zielmenge</h2>
+  <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 0 20px;">
+    <div style="display: flex; align-items: center; gap: 22px;">
+      <button onClick="{{ decAmount }}" aria-label="Weniger" style="width: 48px; height: 48px; border: 1px solid var(--color-divider); background: transparent; font-size: 24px; font-family: var(--font-heading); cursor: pointer; border-radius: 0; transition: background .15s ease, transform .1s ease;" style-hover="background: var(--color-neutral-200);" style-active="background: var(--color-neutral-300); transform: scale(0.94);">–</button>
+      <div style="font-size: 64px; font-weight: 800; font-family: var(--font-heading); min-width: 160px; text-align: center; line-height: 1; animation: numberIn .22s ease both;">{{ amountLabel }}</div>
+      <button onClick="{{ incAmount }}" aria-label="Mehr" style="width: 48px; height: 48px; border: 1px solid var(--color-divider); background: transparent; font-size: 24px; font-family: var(--font-heading); cursor: pointer; border-radius: 0; transition: background .15s ease, transform .1s ease;" style-hover="background: var(--color-neutral-200);" style-active="background: var(--color-neutral-300); transform: scale(0.94);">+</button>
+    </div>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;">
+      <sc-for list="{{ presets }}" as="p" hint-placeholder-count="4">
+        <button onClick="{{ p.select }}" style="padding: 8px 16px; border: 1px solid var(--color-divider); background: transparent; font-size: 13px; font-family: var(--font-body); cursor: pointer; border-radius: 0; color: var(--color-text); transition: background .15s ease;" style-hover="background: var(--color-neutral-200);" style-active="background: var(--color-neutral-300);">{{ p.label }}</button>
+      </sc-for>
+    </div>
+  </div>
+  <div style="padding: 16px 20px 8px;">
+    <button onClick="{{ goResult }}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: var(--color-accent); color: var(--color-bg); border: none; padding: 16px 18px; font-family: var(--font-heading); font-weight: 800; font-size: 15px; cursor: pointer; border-radius: 0; transition: background .15s ease, transform .1s ease;" style-hover="background: var(--color-accent-600);" style-active="background: var(--color-accent-700); transform: scale(0.985);">
+      <span>Rezept berechnen</span>
+      <svg width="9" height="15" viewBox="0 0 9 15" fill="none"><path d="M1 1l6 6-6 6" stroke="var(--color-bg)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isResult }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Rezept-Ergebnis" style="display: flex; flex-direction: column; flex: 1; animation: screenIn .32s cubic-bezier(.2,.8,.2,1) both;">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; margin: 16px 20px 0;">
+    <button onClick="{{ back }}" aria-label="Zurück" style="width: 36px; height: 36px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: -8px; transition: opacity .12s ease;" style-hover="opacity: 0.6;" style-active="opacity: 0.4;">
+      <svg width="11" height="18" viewBox="0 0 11 18" fill="none"><path d="M9 1L1 9l8 8" stroke="var(--color-text)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text); opacity: 0.55; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; margin-left: 12px;">{{ breadcrumb }}</div>
+  </div>
+  <h2 style="margin: 14px 20px 4px; font-size: 26px; font-family: var(--font-heading); font-weight: 800;">Dein Rezept</h2>
+  <div style="margin: 0 20px 16px; font-size: 13px; opacity: 0.6;">{{ amountLabel }} Ziel</div>
+
+  <sc-if value="{{ isPourover }}" hint-placeholder-val="{{ false }}">
+  <div style="margin: 0 20px; border: 1px solid var(--color-divider); display: grid; grid-template-columns: 1fr 1fr;">
+    <div style="padding: 20px; border-right: 1px solid var(--color-divider); border-bottom: 1px solid var(--color-divider);">
+      <div style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55;">Bohnen</div>
+      <div style="font-size: 40px; font-weight: 800; font-family: var(--font-heading); line-height: 1.15;">{{ coffeeVal }}<span style="font-size: 18px;"> g</span></div>
+    </div>
+    <div style="padding: 20px; border-bottom: 1px solid var(--color-divider);">
+      <div style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55;">Wasser</div>
+      <div style="font-size: 40px; font-weight: 800; font-family: var(--font-heading); line-height: 1.15;">{{ waterVal }}<span style="font-size: 18px;"> g</span></div>
+    </div>
+    <div style="padding: 20px; border-right: 1px solid var(--color-divider);">
+      <div style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55;">Mahlgrad</div>
+      <div style="font-size: 40px; font-weight: 800; font-family: var(--font-heading); line-height: 1.15;">{{ grindVal }}<span style="font-size: 18px;"> Kl.</span></div>
+    </div>
+    <div style="padding: 20px;">
+      <div style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55;">Bloom</div>
+      <div style="font-size: 28px; font-weight: 800; font-family: var(--font-heading); line-height: 1.25;">{{ bloomVal }} g</div>
+      <div style="font-size: 12px; opacity: 0.6; margin-top: 2px;">{{ bloomTimeVal }} Sek. ziehen</div>
+    </div>
+    <div style="grid-column: span 2; border-top: 1px solid var(--color-divider); padding: 20px;">
+      <div style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55;">Brühzeit gesamt</div>
+      <div style="font-size: 26px; font-weight: 800; font-family: var(--font-heading); margin-top: 2px;">{{ timeRangeVal }}</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isIced }}" hint-placeholder-val="{{ false }}">
+  <div style="margin: 0 20px; border: 1px solid var(--color-divider); display: grid; grid-template-columns: 1fr 1fr 1fr;">
+    <div style="padding: 16px 14px; border-right: 1px solid var(--color-divider); border-bottom: 1px solid var(--color-divider);">
+      <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55;">Bohnen</div>
+      <div style="font-size: 26px; font-weight: 800; font-family: var(--font-heading);">{{ coffeeVal }}<span style="font-size: 13px;"> g</span></div>
+    </div>
+    <div style="padding: 16px 14px; border-right: 1px solid var(--color-divider); border-bottom: 1px solid var(--color-divider);">
+      <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55;">Heisses Wasser</div>
+      <div style="font-size: 26px; font-weight: 800; font-family: var(--font-heading);">{{ waterVal }}<span style="font-size: 13px;"> g</span></div>
+    </div>
+    <div style="padding: 16px 14px; border-bottom: 1px solid var(--color-divider);">
+      <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55;">Eis</div>
+      <div style="font-size: 26px; font-weight: 800; font-family: var(--font-heading);">{{ iceVal }}<span style="font-size: 13px;"> g</span></div>
+    </div>
+    <div style="padding: 16px 14px; border-right: 1px solid var(--color-divider);">
+      <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55;">Mahlgrad</div>
+      <div style="font-size: 26px; font-weight: 800; font-family: var(--font-heading);">{{ grindVal }}<span style="font-size: 13px;"> Kl.</span></div>
+    </div>
+    <div style="padding: 16px 14px; border-right: 1px solid var(--color-divider);">
+      <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55;">Bloom</div>
+      <div style="font-size: 20px; font-weight: 800; font-family: var(--font-heading);">{{ bloomVal }} g</div>
+      <div style="font-size: 10.5px; opacity: 0.6;">{{ bloomTimeVal }} Sek.</div>
+    </div>
+    <div style="padding: 16px 14px;">
+      <div style="font-size: 9.5px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.55;">Brühzeit</div>
+      <div style="font-size: 15px; font-weight: 800; font-family: var(--font-heading); margin-top: 4px; line-height: 1.3;">{{ timeRangeVal }}</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <sc-if value="{{ isColdbrew }}" hint-placeholder-val="{{ false }}">
+  <div style="margin: 0 20px; border: 1px solid var(--color-divider); display: grid; grid-template-columns: 1fr 1fr;">
+    <div style="padding: 22px; border-right: 1px solid var(--color-divider); border-bottom: 1px solid var(--color-divider);">
+      <div style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55;">Bohnen</div>
+      <div style="font-size: 40px; font-weight: 800; font-family: var(--font-heading); line-height: 1.15;">{{ coffeeVal }}<span style="font-size: 18px;"> g</span></div>
+    </div>
+    <div style="padding: 22px; border-bottom: 1px solid var(--color-divider);">
+      <div style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55;">Wasser</div>
+      <div style="font-size: 40px; font-weight: 800; font-family: var(--font-heading); line-height: 1.15;">{{ waterVal }}<span style="font-size: 18px;"> g</span></div>
+    </div>
+    <div style="padding: 22px; border-right: 1px solid var(--color-divider);">
+      <div style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55;">Mahlgrad</div>
+      <div style="font-size: 40px; font-weight: 800; font-family: var(--font-heading); line-height: 1.15;">{{ grindVal }}<span style="font-size: 18px;"> Kl.</span></div>
+    </div>
+    <div style="padding: 22px;">
+      <div style="font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55;">Ziehzeit</div>
+      <div style="font-size: 24px; font-weight: 800; font-family: var(--font-heading); line-height: 1.3; margin-top: 2px;">{{ steepRangeVal }}</div>
+    </div>
+  </div>
+  </sc-if>
+
+  <div style="flex: 1;"></div>
+  <div style="padding: 20px; display: flex; flex-direction: column; gap: 10px;">
+    <button onClick="{{ goFeedback }}" style="width: 100%; display: flex; align-items: center; justify-content: space-between; background: var(--color-accent); color: var(--color-bg); border: none; padding: 16px 18px; font-family: var(--font-heading); font-weight: 800; font-size: 15px; cursor: pointer; border-radius: 0; transition: background .15s ease, transform .1s ease;" style-hover="background: var(--color-accent-600);" style-active="background: var(--color-accent-700); transform: scale(0.985);">
+      <span>Feedback geben</span>
+      <svg width="9" height="15" viewBox="0 0 9 15" fill="none"><path d="M1 1l6 6-6 6" stroke="var(--color-bg)" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
+    <button onClick="{{ skipFeedback }}" style="width: 100%; background: transparent; border: 1px solid var(--color-divider); color: var(--color-text); padding: 14px 18px; font-family: var(--font-body); font-size: 13px; cursor: pointer; border-radius: 0; transition: background .15s ease;" style-hover="background: var(--color-neutral-200);" style-active="background: var(--color-neutral-300);">Neues Rezept</button>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isFeedback }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Feedback" style="display: flex; flex-direction: column; flex: 1; animation: screenIn .32s cubic-bezier(.2,.8,.2,1) both;">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; margin: 16px 20px 0;">
+    <button onClick="{{ skipFeedback }}" aria-label="Schliessen" style="width: 36px; height: 36px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; margin-left: -8px; transition: opacity .12s ease;" style-hover="opacity: 0.6;" style-active="opacity: 0.4;">
+      <svg width="15" height="15" viewBox="0 0 16 16" fill="none"><path d="M1 1l14 14M15 1L1 15" stroke="var(--color-text)" stroke-width="2" stroke-linecap="round"></path></svg>
+    </button>
+    <div style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; opacity: 0.55; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: right; margin-left: 12px;">{{ breadcrumb }}</div>
+  </div>
+  <h2 style="margin: 14px 20px 20px; font-size: 26px; font-family: var(--font-heading); font-weight: 800;">Wie war's?</h2>
+  <div style="padding: 0 20px; display: flex; flex-direction: column; gap: 12px;">
+
+    <sc-if value="{{ isTagSauer }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ pickSauer }}" style="padding: 18px; background: var(--color-accent); color: var(--color-bg); cursor: pointer;">
+        <div style="font-weight: 800; font-family: var(--font-heading); font-size: 16px;">Zu sauer</div>
+        <div style="font-size: 12px; opacity: 0.85; margin-top: 2px;">Heller, spitzer Geschmack</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isTagSauerOff }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ pickSauer }}" style="padding: 18px; background: transparent; border: 1px solid var(--color-divider); color: var(--color-text); cursor: pointer; transition: background .15s ease, border-color .15s ease;" style-hover="background: var(--color-neutral-200);">
+        <div style="font-weight: 800; font-family: var(--font-heading); font-size: 16px;">Zu sauer</div>
+        <div style="font-size: 12px; opacity: 0.6; margin-top: 2px;">Heller, spitzer Geschmack</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isTagAusgewogen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ pickAusgewogen }}" style="padding: 18px; background: var(--color-accent); color: var(--color-bg); cursor: pointer;">
+        <div style="font-weight: 800; font-family: var(--font-heading); font-size: 16px;">Ausgewogen</div>
+        <div style="font-size: 12px; opacity: 0.85; margin-top: 2px;">Genau richtig</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isTagAusgewogenOff }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ pickAusgewogen }}" style="padding: 18px; background: transparent; border: 1px solid var(--color-divider); color: var(--color-text); cursor: pointer; transition: background .15s ease, border-color .15s ease;" style-hover="background: var(--color-neutral-200);">
+        <div style="font-weight: 800; font-family: var(--font-heading); font-size: 16px;">Ausgewogen</div>
+        <div style="font-size: 12px; opacity: 0.6; margin-top: 2px;">Genau richtig</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isTagBitter }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ pickBitter }}" style="padding: 18px; background: var(--color-accent); color: var(--color-bg); cursor: pointer;">
+        <div style="font-weight: 800; font-family: var(--font-heading); font-size: 16px;">Zu bitter</div>
+        <div style="font-size: 12px; opacity: 0.85; margin-top: 2px;">Schwerer, adstringierender Geschmack</div>
+      </div>
+    </sc-if>
+    <sc-if value="{{ isTagBitterOff }}" hint-placeholder-val="{{ true }}">
+      <div onClick="{{ pickBitter }}" style="padding: 18px; background: transparent; border: 1px solid var(--color-divider); color: var(--color-text); cursor: pointer; transition: background .15s ease, border-color .15s ease;" style-hover="background: var(--color-neutral-200);">
+        <div style="font-weight: 800; font-family: var(--font-heading); font-size: 16px;">Zu bitter</div>
+        <div style="font-size: 12px; opacity: 0.6; margin-top: 2px;">Schwerer, adstringierender Geschmack</div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ hasTag }}" hint-placeholder-val="{{ false }}">
+      <div style="margin-top: 8px; display: flex; flex-direction: column; gap: 14px;">
+        <textarea class="input" placeholder="Notiz (optional)" value="{{ note }}" onChange="{{ setNote }}" style="min-height: 70px;"></textarea>
+        <button onClick="{{ saveFeedback }}" style="width: 100%; background: var(--color-accent); color: var(--color-bg); border: none; padding: 16px 18px; font-family: var(--font-heading); font-weight: 800; font-size: 15px; cursor: pointer; border-radius: 0; transition: background .15s ease, transform .1s ease;" style-hover="background: var(--color-accent-600);" style-active="background: var(--color-accent-700); transform: scale(0.985);">Eintrag speichern</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+<div data-screen-label="Verlauf" style="display: flex; flex-direction: column; flex: 1; animation: screenIn .32s cubic-bezier(.2,.8,.2,1) both;">
+  <div style="display: flex; align-items: center; justify-content: space-between; height: 36px; margin: 16px 20px 0;">
+    <button onClick="{{ goHome }}" aria-label="Zurück" style="width: 36px; height: 36px; border: none; background: transparent; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-left: -8px; transition: opacity .12s ease;" style-hover="opacity: 0.6;" style-active="opacity: 0.4;">
+      <svg width="11" height="18" viewBox="0 0 11 18" fill="none"><path d="M9 1L1 9l8 8" stroke="var(--color-text)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    </button>
+    <div></div>
+  </div>
+  <h2 style="margin: 14px 20px 20px; font-size: 26px; font-family: var(--font-heading); font-weight: 800;">Verlauf</h2>
+  <sc-if value="{{ hasHistory }}" hint-placeholder-val="{{ false }}">
+    <div>
+      <sc-for list="{{ history }}" as="h" hint-placeholder-count="0">
+        <div style="padding: 16px 20px; border-bottom: 1px solid var(--color-divider);">
+          <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 10px;">
+            <div style="font-size: 15px; font-weight: 800; font-family: var(--font-heading);">{{ h.methodName }} · {{ h.variantLabel }}</div>
+            <div style="font-size: 11px; opacity: 0.5; flex-shrink: 0;">{{ h.dateLabel }}</div>
+          </div>
+          <div style="font-size: 12.5px; opacity: 0.65; margin-top: 3px;">{{ h.beanName }} · {{ h.amountsLabel }}</div>
+          <div style="margin-top: 8px; display: inline-flex;">
+            <span style="font-size: 11px; border: 1px solid var(--color-accent); color: var(--color-accent-700); padding: 3px 10px;">{{ h.tagLabel }}</span>
+          </div>
+          <sc-if value="{{ h.hasNote }}" hint-placeholder-val="{{ false }}">
+            <div style="font-size: 12px; opacity: 0.6; margin-top: 8px; font-style: italic;">"{{ h.note }}"</div>
+          </sc-if>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ noHistory }}" hint-placeholder-val="{{ true }}">
+    <div style="padding: 60px 30px; text-align: center; font-size: 13px; opacity: 0.5;">Noch keine Einträge. Brühe etwas und gib danach Feedback.</div>
+  </sc-if>
+</div>
+</sc-if>
+
+</div>
+</div>
+</x-import>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  state = {
+    screen: 'home',
+    methodId: null,
+    variantId: null,
+    beanId: null,
+    amount: 300,
+    feedbackTag: null,
+    feedbackNote: '',
+    history: [],
+  };
+
+  METHODS = [
+    { id: 'v60', name: 'Pour Over V60', desc: 'Handaufguss · 3 Rezepte', mono: 'V6',
+      variants: [
+        { id: 'clean', ratio: 15, label: '1:15', sub: 'Klar & Sauber', bloomRatio: 2, bloomTimeSec: 30, timeRange: '2:30–2:45 Min', grind: 22 },
+        { id: 'balanced', ratio: 16, label: '1:16', sub: 'Ausgewogen', bloomRatio: 2, bloomTimeSec: 30, timeRange: '2:45–3:00 Min', grind: 24 },
+        { id: 'mild', ratio: 17, label: '1:17', sub: 'Mild', bloomRatio: 2, bloomTimeSec: 35, timeRange: '3:00–3:15 Min', grind: 26 },
+      ] },
+    { id: 'iced', name: 'Japanese Iced Coffee', desc: 'Direkt auf Eis · 3 Rezepte', mono: 'JI',
+      variants: [
+        { id: 'bright', ratio: 13, label: '1:13', sub: 'Kräftig & Klar', waterPct: 0.6, icePct: 0.4, bloomRatio: 2, bloomTimeSec: 30, timeRange: '1:30–1:45 Min', grind: 20 },
+        { id: 'classic', ratio: 15, label: '1:15', sub: 'Klassisch', waterPct: 0.6, icePct: 0.4, bloomRatio: 2, bloomTimeSec: 30, timeRange: '1:45–2:00 Min', grind: 22 },
+        { id: 'gentle', ratio: 16, label: '1:16', sub: 'Sanft & Fruchtig', waterPct: 0.6, icePct: 0.4, bloomRatio: 2, bloomTimeSec: 35, timeRange: '2:00–2:15 Min', grind: 24 },
+      ] },
+    { id: 'coldbrew', name: 'Cold Brew', desc: 'Kalt gezogen, servierfertig · 3 Rezepte', mono: 'CB',
+      variants: [
+        { id: 'strong', ratio: 12, label: '1:12', sub: 'Kräftig', steepRange: '16–18 Std. ziehen', grind: 38 },
+        { id: 'balanced', ratio: 13, label: '1:13', sub: 'Ausgewogen', steepRange: '14–16 Std. ziehen', grind: 36 },
+        { id: 'light', ratio: 15, label: '1:15', sub: 'Leicht', steepRange: '12–14 Std. ziehen', grind: 34 },
+      ] },
+  ];
+
+  BEANS = [
+    { id: 'b1', roaster: 'Four Hundred (MG)', name: 'Oscar Daza', meta: 'Kolumbien · BioMaster Low Temperature Fermentation' },
+    { id: 'b2', roaster: 'Four Hundred (MG)', name: 'Ceiba Marcala', meta: 'Honduras · Honey Organic' },
+  ];
+
+  AMOUNT_PRESETS = [200, 300, 400, 600];
+
+  componentDidMount() {
+    try {
+      const raw = localStorage.getItem('coffeeapp_history_v1');
+      if (raw) this.setState({ history: JSON.parse(raw) });
+    } catch (e) {}
+  }
+
+  getMethod() { return this.METHODS.find(m => m.id === this.state.methodId); }
+  getVariant() { const m = this.getMethod(); return m && m.variants.find(v => v.id === this.state.variantId); }
+  getBean() { return this.BEANS.find(b => b.id === this.state.beanId); }
+
+  selectMethod(id) { this.setState({ methodId: id, screen: 'variant' }); }
+  selectVariant(id) { this.setState({ variantId: id, screen: 'bean' }); }
+  selectBean(id) { this.setState({ beanId: id, screen: 'amount' }); }
+  goResult() { this.setState({ screen: 'result' }); }
+  setAmount(n) { this.setState({ amount: Math.max(50, Math.min(2000, Math.round(n))) }); }
+  adjustAmount(delta) { this.setAmount(this.state.amount + delta); }
+  goHistory() { this.setState({ screen: 'history' }); }
+  goFeedback() { this.setState({ screen: 'feedback', feedbackTag: null, feedbackNote: '' }); }
+  pickTag(tag) { this.setState({ feedbackTag: tag }); }
+  setNote(v) { this.setState({ feedbackNote: v }); }
+
+  back() {
+    const order = { variant: 'home', bean: 'variant', amount: 'bean', result: 'amount', feedback: 'result', history: 'home' };
+    this.setState({ screen: order[this.state.screen] || 'home' });
+  }
+
+  resetToHome(extra) {
+    this.setState(Object.assign({ screen: 'home', methodId: null, variantId: null, beanId: null, feedbackTag: null, feedbackNote: '' }, extra || {}));
+  }
+
+  skipFeedback() { this.resetToHome(); }
+
+  saveFeedback() {
+    const m = this.getMethod(), v = this.getVariant(), b = this.getBean();
+    if (!m || !v || !b || !this.state.feedbackTag) return;
+    const calc = this.calc();
+    const entry = {
+      id: Date.now(),
+      date: new Date().toISOString(),
+      methodName: m.name,
+      variantLabel: v.label + ' ' + v.sub,
+      beanName: b.name,
+      coffee: calc.coffee, water: calc.water, ice: calc.ice != null ? calc.ice : null,
+      tag: this.state.feedbackTag, note: this.state.feedbackNote,
+    };
+    const history = [entry].concat(this.state.history).slice(0, 50);
+    try { localStorage.setItem('coffeeapp_history_v1', JSON.stringify(history)); } catch (e) {}
+    this.resetToHome({ history });
+  }
+
+  calc() {
+    const v = this.getVariant(), m = this.getMethod();
+    if (!v || !m) return {};
+    const amount = this.state.amount;
+    const coffee = amount / v.ratio;
+    if (m.id === 'iced') {
+      return { coffee, water: amount * v.waterPct, ice: amount * v.icePct, bloom: coffee * v.bloomRatio, grind: v.grind, timeRange: v.timeRange, bloomTimeSec: v.bloomTimeSec };
+    }
+    if (m.id === 'coldbrew') {
+      return { coffee, water: amount, grind: v.grind, steepRange: v.steepRange };
+    }
+    return { coffee, water: amount, bloom: coffee * v.bloomRatio, grind: v.grind, timeRange: v.timeRange, bloomTimeSec: v.bloomTimeSec };
+  }
+
+  fmt(n) {
+    if (n == null || isNaN(n)) return '–';
+    const r = Math.round(n * 2) / 2;
+    return (r % 1 === 0) ? String(r) : r.toFixed(1);
+  }
+
+  formatDate(iso) {
+    const d = new Date(iso);
+    return d.toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit' }) + ' · ' + d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  tagLabel(tag) { return tag === 'sauer' ? 'Zu sauer' : (tag === 'bitter' ? 'Zu bitter' : 'Ausgewogen'); }
+
+  renderVals() {
+    const s = this.state;
+    const m = this.getMethod(), v = this.getVariant(), b = this.getBean();
+    const calc = this.calc();
+
+    const methods = this.METHODS.map(mm => ({ id: mm.id, name: mm.name, desc: mm.desc, mono: mm.mono, select: () => this.selectMethod(mm.id) }));
+    const variants = m ? m.variants.map(vv => ({
+      id: vv.id, label: vv.label, sub: vv.sub,
+      meta: (m.id === 'coldbrew') ? ('Mahlgrad ' + vv.grind + ' Klicks · ' + vv.steepRange) : ('Mahlgrad ' + vv.grind + ' Klicks · ' + vv.timeRange),
+      select: () => this.selectVariant(vv.id),
+    })) : [];
+    const beans = this.BEANS.map(bb => ({ id: bb.id, roaster: bb.roaster, name: bb.name, meta: bb.meta, select: () => this.selectBean(bb.id) }));
+    const breadcrumb = [m && m.name, v && (v.label + ' ' + v.sub), b && b.name].filter(Boolean).join(' · ');
+
+    const history = s.history.map(h => ({
+      id: h.id,
+      methodName: h.methodName, variantLabel: h.variantLabel, beanName: h.beanName,
+      dateLabel: this.formatDate(h.date),
+      amountsLabel: h.coffee != null ? (this.fmt(h.coffee) + 'g Bohnen · ' + this.fmt(h.water) + 'g Wasser' + (h.ice != null ? ' · ' + this.fmt(h.ice) + 'g Eis' : '')) : '',
+      tagLabel: this.tagLabel(h.tag),
+      note: h.note, hasNote: !!(h.note && h.note.trim()),
+    }));
+
+    return {
+      isHome: s.screen === 'home', isVariant: s.screen === 'variant', isBean: s.screen === 'bean',
+      isAmount: s.screen === 'amount', isResult: s.screen === 'result', isFeedback: s.screen === 'feedback',
+      isHistory: s.screen === 'history',
+      isIced: !!(m && m.id === 'iced'), isColdbrew: !!(m && m.id === 'coldbrew'), isPourover: !!(m && m.id === 'v60'),
+      methods, variants, beans,
+      methodName: m ? m.name : '', breadcrumb,
+      amount: s.amount, amountLabel: s.amount + ' g',
+      presets: this.AMOUNT_PRESETS.map(p => ({ label: p + ' g', select: () => this.setAmount(p) })),
+      incAmount: () => this.adjustAmount(25), decAmount: () => this.adjustAmount(-25),
+      goHome: () => this.resetToHome(),
+      back: () => this.back(),
+      goHistory: () => this.goHistory(),
+      goResult: () => this.goResult(),
+      goFeedback: () => this.goFeedback(),
+      skipFeedback: () => this.skipFeedback(),
+      saveFeedback: () => this.saveFeedback(),
+      pickSauer: () => this.pickTag('sauer'),
+      pickAusgewogen: () => this.pickTag('ausgewogen'),
+      pickBitter: () => this.pickTag('bitter'),
+      isTagSauer: s.feedbackTag === 'sauer', isTagAusgewogen: s.feedbackTag === 'ausgewogen', isTagBitter: s.feedbackTag === 'bitter',
+      isTagSauerOff: s.feedbackTag !== 'sauer', isTagAusgewogenOff: s.feedbackTag !== 'ausgewogen', isTagBitterOff: s.feedbackTag !== 'bitter',
+      hasTag: !!s.feedbackTag,
+      note: s.feedbackNote,
+      setNote: (e) => this.setNote(e.target.value),
+      coffeeVal: this.fmt(calc.coffee), waterVal: this.fmt(calc.water), iceVal: calc.ice != null ? this.fmt(calc.ice) : null,
+      grindVal: calc.grind, bloomVal: calc.bloom != null ? this.fmt(calc.bloom) : null, bloomTimeVal: calc.bloomTimeSec,
+      timeRangeVal: calc.timeRange, steepRangeVal: calc.steepRange,
+      history, hasHistory: history.length > 0, noHistory: history.length === 0,
+    };
+  }
+}
+</script>
+</body>
+</html>
