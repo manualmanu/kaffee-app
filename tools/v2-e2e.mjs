@@ -32,18 +32,20 @@ try {
   const click = name => page.getByRole('button', { name, exact: true }).click();
   const heading = name => page.getByRole('heading', { level: 1, name, exact: true }).waitFor();
   const nav = name => page.getByRole('navigation').getByRole('button', { name, exact: true }).click();
+  const toRoot = async () => { while (await page.getByRole('button', { name: 'Zurück', exact: true }).count()) await click('Zurück'); };
   const state = () => page.evaluate(() => JSON.parse(localStorage.getItem('kaffee_state_v2')));
-  const shot = async (name, fullPage = true) => {
+  const noOverflow = async () => assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  const shot = async (name, fullPage = false) => {
     await mkdir(path.join(root, 'tools/shots'), { recursive: true });
-    await page.screenshot({ path: path.join(root, `tools/shots/v2-${name}.png`), fullPage });
+    await page.screenshot({ path: path.join(root, `tools/shots/v3-${name}.png`), fullPage });
   };
   await page.goto(base);
-  await heading('Kaffee.');
+  await heading('Brühen');
 
   if (!process.argv.includes('--pwa')) {
-    await shot('design-start', false);
-    await page.getByRole('button', { name: /02 Pour Over Ice/ }).click();
-    await click('+ Neu');
+    await shot('home-empty');
+    await click('Pour Over Ice');
+    await click('Neues Rezept');
     await page.getByLabel('Rezeptname', { exact: true }).fill('Iced aus dem Video');
     await page.getByLabel('Quellenlink (optional)', { exact: true }).fill('https://example.com/rezept');
     await page.getByLabel('Kaffee (g)', { exact: true }).fill('19');
@@ -71,7 +73,8 @@ try {
     assert.equal(await step.getByLabel('Wassermenge (g)', { exact: true }).inputValue(), '120');
     await step.getByLabel('Zeitangabe', { exact: true }).selectOption('at');
     await step.getByLabel('Zeit (Sekunden)', { exact: true }).fill('45');
-    await click('Rezept speichern'); await heading('Iced aus dem Video');
+    await shot('recipe-edit', true);
+    await click('Speichern'); await heading('Iced aus dem Video');
     await page.getByLabel('Zielmenge (ml)', { exact: true }).fill('330');
     await page.getByLabel('Zielmenge (ml)', { exact: true }).press('ArrowUp');
     assert.equal(await page.getByLabel('Zielmenge (ml)', { exact: true }).inputValue(), '335');
@@ -82,7 +85,6 @@ try {
     await click('5 ml weniger');
     assert.equal(await page.getByLabel('Zielmenge (ml)', { exact: true }).inputValue(), '330');
     assert.equal(await page.locator('.stats dd').first().textContent(), '28.5 g');
-    await page.getByText('60 g dazu → insgesamt 60 g Wasser', { exact: true }).waitFor();
     // A continuous slider interaction must not replace the control or lose focus.
     const slider = page.getByRole('slider');
     await slider.focus(); await slider.press('ArrowRight'); await slider.press('ArrowRight');
@@ -91,13 +93,7 @@ try {
     await page.getByLabel('Zielmenge (ml)', { exact: true }).press('Tab');
     assert.equal(await page.getByLabel('Zielmenge (ml)', { exact: true }).inputValue(), '335');
     await page.getByLabel('Zielmenge (ml)', { exact: true }).fill('330');
-    await click('Timer starten');
-    await page.waitForFunction(() => document.querySelector('.timer-value').textContent !== '00:00');
-    await click('Timer pausieren');
-    const paused = await page.locator('.timer-value').textContent();
-    await page.waitForTimeout(1100); assert.equal(await page.locator('.timer-value').textContent(), paused);
-    await click('Zurücksetzen'); assert.equal(await page.locator('.timer-value').textContent(), '00:00');
-    await click('+ Bohne anlegen');
+    await click('Bohne anlegen');
     await page.getByLabel('Bohnenname', { exact: true }).fill('Ethiopia Test');
     await page.getByLabel('Aufbereitung (optional)', { exact: true }).fill('Anaerobic fermented');
     await page.getByLabel('Röster (optional)', { exact: true }).fill('Test-Rösterei');
@@ -105,108 +101,120 @@ try {
     assert.notEqual(await page.getByLabel('Bohnen wählen', { exact: true }).inputValue(), '');
     assert.equal(await page.getByLabel('Zielmenge (ml)', { exact: true }).inputValue(), '330');
     await shot('brew');
-    await shot('design-brew', false);
-    await page.locator('.timer').screenshot({ path: path.join(root, 'tools/shots/v2-design-timer.png') });
-    for (const width of [320, 390]) {
-      await page.setViewportSize({ width, height: 844 });
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-    }
+    for (const width of [320, 390]) { await page.setViewportSize({ width, height: 844 }); await noOverflow(); }
     // Invalid controls inside collapsed settings must become visible on submit.
-    await page.getByText('Einstellungen für diesen Versuch anpassen', { exact: true }).click();
+    await page.getByText('Werte anpassen', { exact: true }).click();
     await page.getByLabel('Mahlgrad (optional)', { exact: true }).fill('-1');
-    await page.getByText('Einstellungen für diesen Versuch anpassen', { exact: true }).click();
-    await click('Fertig · Versuch speichern');
-    assert.equal((await state()).brews.length, 0);
+    await page.getByText('Werte anpassen', { exact: true }).click();
+    await click('Brühen starten');
     assert.equal(await page.locator('details').getAttribute('open'), '');
     await page.getByLabel('Mahlgrad (optional)', { exact: true }).fill('24');
-    await click('Fertig · Versuch speichern');
-    await page.getByRole('heading', { name: 'Wie war dein Kaffee?' }).waitFor();
-    await shot('design-rating', false);
+    await click('Brühen starten'); await heading('Brühen');
+    assert.equal((await state()).brews.length, 0);
+    assert.equal(await page.locator('.step-total').first().textContent(), '60 g');
+    assert.equal(await page.locator('.step-total').nth(1).textContent(), '180 g');
+    await click('Start');
+    await page.waitForFunction(() => document.querySelector('.timer-value').textContent !== '0:00');
+    assert.equal(await page.locator('.steps li.is-active').count(), 1);
+    await click('Pause');
+    const paused = await page.locator('.timer-value').textContent();
+    await page.waitForTimeout(1100); assert.equal(await page.locator('.timer-value').textContent(), paused);
+    await shot('run');
+    await click('Zurücksetzen'); assert.equal(await page.locator('.timer-value').textContent(), '0:00');
+    await click('Fertig');
+    await page.getByRole('heading', { name: 'Wie war er?' }).waitFor();
+    await shot('rating');
     assert.equal(await page.locator('[aria-pressed="true"]').count(), 0);
     assert.equal((await state()).brews.length, 1);
-    await click('Später bewerten');
-    await page.locator('.list-card').first().click();
-    await click('Diesen Versuch wiederholen');
-    await page.getByText('Einstellungen für diesen Versuch anpassen', { exact: true }).click();
+    await click('Später'); await heading('Brühen');
+    await shot('home');
+    await nav('Verlauf');
+    await page.locator('.list-row').first().click();
+    await click('Wiederholen');
+    await page.getByText('Werte anpassen', { exact: true }).click();
     await page.getByLabel('Mahlgrad (optional)', { exact: true }).fill('22');
     await page.getByText(/Mahlgrad: 22 statt 24/).waitFor();
-    await click('Fertig · Versuch speichern');
-    await page.getByRole('group', { name: 'Gesamturteil', exact: true }).getByRole('button', { name: 'gut', exact: true }).click();
+    await click('Brühen starten'); await click('Fertig');
+    await page.getByRole('group', { name: 'Gesamt', exact: true }).getByRole('button', { name: 'gut', exact: true }).click();
+    await page.getByRole('group', { name: 'Säure', exact: true }).getByRole('button', { name: 'passend', exact: true }).click();
+    await page.getByRole('group', { name: 'Säure', exact: true }).getByRole('button', { name: 'passend', exact: true }).click();
+    assert.equal(await page.getByRole('group', { name: 'Säure', exact: true }).locator('[aria-pressed="true"]').count(), 0);
     await page.getByRole('group', { name: 'Säure', exact: true }).getByRole('button', { name: 'passend', exact: true }).click();
     await page.getByRole('group', { name: 'Bitterkeit', exact: true }).getByRole('button', { name: 'zu viel', exact: true }).click();
     await page.getByLabel('Notiz (optional)', { exact: true }).fill('Nächstes Mal etwas gröber.');
-    await click('Bewertung speichern');
+    await click('Bewertung speichern'); await heading('Brühen');
     let data = await state();
     assert.equal(data.brews.length, 2); assert.equal(data.brews[0].recipe.grind, 22); assert.equal(data.brews[1].recipe.grind, 24);
-    assert.equal(data.recipes[0].grind, 24); assert.equal(data.brews[0].rating.bitterness, 'zu viel');
+    assert.equal(data.recipes[0].grind, 24); assert.equal(data.brews[0].rating.bitterness, 'zu viel'); assert.equal(data.brews[0].rating.acidity, 'passend');
     // Selecting a bean retains defaults until explicit reuse of its last attempt.
-    await nav('Brühen'); await page.getByRole('button', { name: /02 Pour Over Ice/ }).click();
-    await shot('design-recipes', false);
+    await click('Pour Over Ice');
+    await shot('recipes');
     await page.getByRole('button', { name: /Iced aus dem Video/ }).click();
     await page.getByLabel('Bohnen wählen', { exact: true }).selectOption(data.beans[0].id);
-    assert.match(await page.locator('.stats').textContent(), /24 Klicks/);
+    assert.match(await page.locator('.stats').first().textContent(), /24 Klicks/);
     await click('Letzten Versuch übernehmen');
-    assert.match(await page.locator('.stats').textContent(), /22 Klicks/);
+    assert.match(await page.locator('.stats').first().textContent(), /22 Klicks/);
     await click('Versuche');
-    await heading('Versuche zum Rezept');
+    await heading('Iced aus dem Video');
     await page.getByLabel('Gesamturteil filtern').selectOption('gut');
-    assert.equal(await page.locator('.list-card').count(), 1);
-    await page.getByLabel('Methode filtern').selectOption('coldbrew');
-    assert.equal(await page.locator('.list-card').count(), 0);
-    await page.getByLabel('Methode filtern').selectOption('');
+    assert.equal(await page.locator('.list-row').count(), 1);
     await page.getByLabel('Gesamturteil filtern').selectOption('');
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-    for (const width of [320, 1100, 390]) {
-      await page.setViewportSize({ width, height: 844 });
-      assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
-    }
-    await shot('history-filters');
-    await page.locator('.list-card').first().click();
-    await click('Diesen Versuch wiederholen');
-    await click('Einstellungen ins Ausgangsrezept übernehmen');
+    for (const width of [320, 1100, 390]) { await page.setViewportSize({ width, height: 844 }); await noOverflow(); }
+    await page.locator('.list-row').first().click();
+    await click('Wiederholen');
+    await click('Als Standard ins Rezept übernehmen');
     data = await state(); assert.equal(data.recipes[0].grind, 22); assert.equal(data.brews[1].recipe.grind, 24);
+    await toRoot();
+    await nav('Verlauf');
+    await page.getByLabel('Methode filtern').selectOption('coldbrew');
+    assert.equal(await page.locator('.list-row').count(), 0);
+    await page.getByLabel('Methode filtern').selectOption('');
+    await shot('history');
     await nav('Bohnen');
     await page.getByRole('button', { name: /Ethiopia Test/ }).click();
     await click('Bohne archivieren');
     assert.equal((await state()).beans[0].archived, true);
     assert.equal((await state()).brews[0].bean.archived, false);
     // Archived beans are absent from fresh preparation, but preserved in repeats.
-    await nav('Brühen'); await page.getByRole('button', { name: /02 Pour Over Ice/ }).click();
+    await nav('Brühen'); await click('Pour Over Ice');
     await page.getByRole('button', { name: /Iced aus dem Video/ }).click();
     assert.equal(await page.getByLabel('Bohnen wählen', { exact: true }).locator('option').count(), 1);
-    await click('Fertig · Versuch speichern'); await click('Später bewerten');
+    await click('Brühen starten'); await click('Fertig'); await click('Später');
     assert.equal((await state()).brews[0].bean, null);
     // Cold Brew uses a time range without a timer or pour editor.
-    await nav('Brühen'); await page.getByRole('button', { name: /03 Cold Brew/ }).click(); await click('+ Neu');
+    await click('Cold Brew'); await click('Neues Rezept');
     await page.getByLabel('Rezeptname', { exact: true }).fill('Cold Brew über Nacht');
     await page.getByLabel('Ziehzeit (Stunden)', { exact: true }).fill('12');
     await page.getByLabel('Bis (Stunden, optional)', { exact: true }).fill('16');
     assert.equal(await page.getByRole('button', { name: '+ Aufguss', exact: true }).count(), 0);
-    await click('Rezept speichern');
-    await page.getByText('12–16 Stunden', { exact: true }).waitFor();
-    assert.equal(await page.getByRole('button', { name: 'Timer starten', exact: true }).count(), 0);
-    await click('Fertig · Versuch speichern'); await click('Später bewerten');
+    await click('Speichern');
+    await page.getByText('12–16 h', { exact: true }).waitFor();
+    await click('Ansetzen');
+    assert.equal(await page.getByRole('button', { name: 'Start', exact: true }).count(), 0);
+    await click('Fertig'); await click('Später');
     // Minimal ratio-only recipe, no bean, no steps, no mandatory tasting.
-    await nav('Brühen'); await page.getByRole('button', { name: /01 Pour Over/ }).click(); await click('+ Neu');
+    await click('Pour Over'); await click('Neues Rezept');
     await page.getByLabel('Rezeptname', { exact: true }).fill('Pour Over einfach');
     await page.getByLabel('Wasser (g / ca. ml)', { exact: true }).fill('222');
     await page.getByLabel('Verhältnis 1 :', { exact: true }).fill('15');
     assert.equal(await page.getByLabel('Kaffee (g)', { exact: true }).inputValue(), '14.8');
-    await click('Rezept speichern');
+    await click('Speichern');
     assert.equal(await page.getByLabel('Zielmenge (ml)', { exact: true }).inputValue(), '222');
+    await click('Brühen starten');
     const countBeforeFailure = (await state()).brews.length;
     await page.evaluate(() => {
       window.restoreStorageWrite = Storage.prototype.setItem;
       Storage.prototype.setItem = () => { throw new DOMException('Full', 'QuotaExceededError'); };
     });
-    await click('Fertig · Versuch speichern');
+    await click('Fertig');
     await page.getByRole('alert').filter({ hasText: 'Speichern nicht möglich' }).waitFor();
     assert.equal((await state()).brews.length, countBeforeFailure);
     await page.evaluate(() => { Storage.prototype.setItem = window.restoreStorageWrite; delete window.restoreStorageWrite; });
-    await click('Fertig · Versuch speichern'); await click('Später bewerten');
+    await click('Fertig'); await click('Später');
     assert.equal((await state()).brews[0].recipe.water, 222);
     // Backups roundtrip all entities and invalid imports leave data untouched.
-    await nav('Daten');
+    await click('Daten'); await heading('Daten');
+    await shot('data');
     const before = await state();
     const downloaded = page.waitForEvent('download'); await click('Backup exportieren');
     const backup = JSON.parse(await readFile(await (await downloaded).path(), 'utf8'));
@@ -214,8 +222,7 @@ try {
     await page.getByLabel('Backup-Datei', { exact: true }).setInputFiles({ name: 'invalid.json', mimeType: 'application/json', buffer: Buffer.from('{"version":2}') });
     await page.getByRole('alert').waitFor(); assert.deepEqual(await state(), before);
     await page.getByLabel('Backup-Datei', { exact: true }).setInputFiles({ name: 'backup.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(backup)) });
-    await heading('Kaffee.'); assert.deepEqual(await state(), before);
-    await shot('home');
+    await heading('Brühen'); assert.deepEqual(await state(), before);
   } else {
     const data = emptyData(); const r = newRecipe('coldbrew'); r.name = 'Offline Cold Brew'; r.steepMin = 12; data.recipes.push(r);
     await page.evaluate(data => localStorage.setItem('kaffee_state_v2', JSON.stringify(data)), data);
@@ -226,11 +233,11 @@ try {
   await page.waitForFunction(() => !!navigator.serviceWorker.controller);
   const manifest = await page.evaluate(async () => (await fetch(document.querySelector('link[rel=manifest]').href)).json());
   assert.ok(manifest.icons.length);
-  await context.setOffline(true); await page.reload(); await heading('Kaffee.');
-  await page.getByRole('button', { name: /03 Cold Brew/ }).click();
+  await context.setOffline(true); await page.reload(); await heading('Brühen');
+  await click('Cold Brew');
   await page.getByRole('button', { name: /Cold Brew über Nacht|Offline Cold Brew/ }).click();
-  await page.getByText(/12.*Stunden/).first().waitFor();
-  await click('Fertig · Versuch speichern'); await click('Später bewerten');
+  await page.getByText(/^12(–16)? h$/).first().waitFor();
+  await click('Ansetzen'); await click('Fertig'); await click('Später');
   assert.deepEqual(errors, []);
   await context.setOffline(false);
 
@@ -247,12 +254,12 @@ try {
   assert.notEqual(await legacyPage.evaluate(() => localStorage.getItem('kaffee_state_v1')), null);
   legacyPage.once('dialog', dialog => dialog.accept());
   await legacyPage.getByRole('button', { name: 'Neustart bestätigen', exact: true }).click();
-  await legacyPage.getByRole('heading', { name: 'Kaffee.', exact: true }).waitFor();
+  await legacyPage.getByRole('heading', { name: 'Brühen', exact: true }).waitFor();
   assert.equal(await legacyPage.evaluate(() => localStorage.getItem('kaffee_state_v1')), null);
   await legacyPage.evaluate(() => localStorage.setItem('kaffee_state_v2', '{broken'));
   await legacyPage.reload(); await legacyPage.getByRole('heading', { name: 'Daten konnten nicht geladen werden.', exact: true }).waitFor();
   assert.equal(await legacyPage.evaluate(() => localStorage.getItem('kaffee_state_v2')), '{broken');
-    console.log(process.argv.includes('--pwa') ? 'V2_PWA_OK: Offline reload, persisted recipes, offline saving, legacy and corruption recovery.' : 'V2_E2E_OK: All three methods, scaling, steps, timer, beans, snapshots, ratings, filters, backup, offline and recovery.');
+  console.log(process.argv.includes('--pwa') ? 'V2_PWA_OK: Offline reload, persisted recipes, offline saving, legacy and corruption recovery.' : 'V2_E2E_OK: All three methods, scaling, steps, timer, beans, snapshots, ratings, filters, backup, offline and recovery.');
 } finally {
   if (browser) await browser.close();
   await new Promise(resolve => server.close(resolve));

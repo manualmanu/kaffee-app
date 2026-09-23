@@ -1,5 +1,5 @@
 // Bei jeder Änderung an SHELL-Assets diesen Namen hochzählen, sonst bleiben Nutzer auf altem Cache.
-const CACHE = 'kaffee-shell-v5';
+const CACHE = 'kaffee-shell-v6';
 
 const SHELL = [
   './',
