@@ -1,8 +1,12 @@
 import { el } from '../dom.js';
 
+let fieldIdCounter = 0;
+
 export function field(labelText, inputNode) {
+  const id = 'field-' + (++fieldIdCounter);
+  if (inputNode && inputNode.setAttribute) inputNode.setAttribute('id', id);
   return el('div', { class: 'field' }, [
-    el('label', {}, labelText),
+    el('label', { for: id }, labelText),
     inputNode,
   ]);
 }
@@ -11,9 +15,9 @@ export function textInput({ value = '', placeholder = '', onInput, required = fa
   return el('input', { class: 'input', type: 'text', value, placeholder, required, oninput: (e) => onInput(e.target.value) });
 }
 
-export function numberInput({ value, placeholder = '', onInput, step = 'any', required = false }) {
+export function numberInput({ value, placeholder = '', onInput, step = 'any', required = false, min, max }) {
   return el('input', {
-    class: 'input', type: 'number', value: value ?? '', placeholder, step, required,
+    class: 'input', type: 'number', value: value ?? '', placeholder, step, required, min, max,
     oninput: (e) => onInput(e.target.value === '' ? '' : Number(e.target.value)),
   });
 }

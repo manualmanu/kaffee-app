@@ -49,6 +49,32 @@ function draftFromVariante(v) {
   };
 }
 
+function validateDraft(draft) {
+  const errors = [];
+  if (!(Number(draft.ratio) > 0)) errors.push('Ratio muss grösser als 0 sein.');
+  if (!(Number(draft.mahlgradWert) > 0)) errors.push('Mahlgrad muss grösser als 0 sein.');
+  if (draft.felder.bloom) {
+    if (!(Number(draft.bloomProzent) >= 0 && Number(draft.bloomProzent) <= 100)) errors.push('Bloom % muss zwischen 0 und 100 liegen.');
+    if (!(Number(draft.bloomZeitSek) > 0)) errors.push('Bloom-Ziehzeit muss grösser als 0 sein.');
+  }
+  if (draft.felder.eis && !(Number(draft.eisProzent) >= 0 && Number(draft.eisProzent) <= 100)) {
+    errors.push('Eis % muss zwischen 0 und 100 liegen.');
+  }
+  if (draft.kategorie === 'coldbrew') {
+    if (!(Number(draft.ziehzeitVonH) > 0) || !(Number(draft.ziehzeitBisH) > 0)) errors.push('Ziehzeiten müssen grösser als 0 sein.');
+  } else if (!(Number(draft.bruehzeitVon) > 0) || !(Number(draft.bruehzeitBis) > 0)) {
+    errors.push('Brühzeiten müssen grösser als 0 sein.');
+  }
+  if (draft.felder.pourStufen && draft.pourStufen.length) {
+    const prozente = draft.pourStufen.map(s => Number(s.prozent));
+    const sorted = [...prozente].sort((a, b) => a - b);
+    if (!prozente.every((p, i) => p === sorted[i])) errors.push('Pour-Stufen müssen nach Prozent aufsteigend sortiert sein.');
+    if (prozente.some(p => !(p > 0 && p <= 100))) errors.push('Pour-Stufen-Prozentwerte müssen zwischen 0 und 100 liegen.');
+    if (draft.pourStufen.some(s => !(Number(s.zeitpunktSek) > 0))) errors.push('Pour-Stufen-Zeitpunkte müssen grösser als 0 sein.');
+  }
+  return errors;
+}
+
 function render(ui) {
   const ctx = ui.formCtx;
   const editing = ctx.editId ? getVariante(ctx.editId) : null;
@@ -56,6 +82,7 @@ function render(ui) {
   if (!ui.variantFormDraft || ui.variantFormDraftKey !== key) {
     ui.variantFormDraft = editing ? draftFromVariante(editing) : defaultDraftForKategorie(ctx.kategorie || 'v60');
     ui.variantFormDraftKey = key;
+    ui.variantFormError = null;
   }
   const draft = ui.variantFormDraft;
   const matrix = KATEGORIE_FELD_MATRIX[draft.kategorie];
@@ -75,8 +102,8 @@ function render(ui) {
       options: BRAUART_KATEGORIEN.map(k => ({ value: k, label: KATEGORIE_LABEL[k] })),
       onChange: setKategorie,
     })),
-    field('Ratio (1 : x)', numberInput({ value: draft.ratio, required: true, onInput: (v) => { draft.ratio = v; } })),
-    field(`Mahlgrad (${draft.mahlgradEinheit})`, numberInput({ value: draft.mahlgradWert, required: true, onInput: (v) => { draft.mahlgradWert = v; } })),
+    field('Ratio (1 : x)', numberInput({ value: draft.ratio, required: true, min: 0.1, onInput: (v) => { draft.ratio = v; } })),
+    field(`Mahlgrad (${draft.mahlgradEinheit})`, numberInput({ value: draft.mahlgradWert, required: true, min: 0.1, onInput: (v) => { draft.mahlgradWert = v; } })),
   ];
 
   rows.push(el('div', {}, [
@@ -90,11 +117,11 @@ function render(ui) {
     rows.push(field('Wassertemperatur (°C)', numberInput({ value: draft.temperaturC, onInput: (v) => { draft.temperaturC = v; } })));
   }
   if (draft.felder.bloom) {
-    rows.push(field('Bloom (% des heissen Wassers)', numberInput({ value: draft.bloomProzent, onInput: (v) => { draft.bloomProzent = v; } })));
-    rows.push(field('Bloom-Ziehzeit (Sekunden)', numberInput({ value: draft.bloomZeitSek, onInput: (v) => { draft.bloomZeitSek = v; } })));
+    rows.push(field('Bloom (% des heissen Wassers)', numberInput({ value: draft.bloomProzent, min: 0, max: 100, onInput: (v) => { draft.bloomProzent = v; } })));
+    rows.push(field('Bloom-Ziehzeit (Sekunden)', numberInput({ value: draft.bloomZeitSek, min: 1, onInput: (v) => { draft.bloomZeitSek = v; } })));
   }
   if (draft.felder.eis) {
-    rows.push(field('Eis (% der Zielmenge)', numberInput({ value: draft.eisProzent, onInput: (v) => { draft.eisProzent = v; } })));
+    rows.push(field('Eis (% der Zielmenge)', numberInput({ value: draft.eisProzent, min: 0, max: 100, onInput: (v) => { draft.eisProzent = v; } })));
   }
   if (draft.felder.lagerort) {
     rows.push(field('Lagerort', textInput({ value: draft.lagerort, onInput: (v) => { draft.lagerort = v; } })));
@@ -102,13 +129,13 @@ function render(ui) {
 
   if (draft.kategorie === 'coldbrew') {
     rows.push(el('div', { style: 'display:flex;gap:10px;' }, [
-      field('Ziehzeit von (Std.)', numberInput({ value: draft.ziehzeitVonH, onInput: (v) => { draft.ziehzeitVonH = v; } })),
-      field('Ziehzeit bis (Std.)', numberInput({ value: draft.ziehzeitBisH, onInput: (v) => { draft.ziehzeitBisH = v; } })),
+      field('Ziehzeit von (Std.)', numberInput({ value: draft.ziehzeitVonH, min: 1, onInput: (v) => { draft.ziehzeitVonH = v; } })),
+      field('Ziehzeit bis (Std.)', numberInput({ value: draft.ziehzeitBisH, min: 1, onInput: (v) => { draft.ziehzeitBisH = v; } })),
     ]));
   } else {
     rows.push(el('div', { style: 'display:flex;gap:10px;' }, [
-      field('Brühzeit von (Sek.)', numberInput({ value: draft.bruehzeitVon, onInput: (v) => { draft.bruehzeitVon = v; } })),
-      field('Brühzeit bis (Sek.)', numberInput({ value: draft.bruehzeitBis, onInput: (v) => { draft.bruehzeitBis = v; } })),
+      field('Brühzeit von (Sek.)', numberInput({ value: draft.bruehzeitVon, min: 1, onInput: (v) => { draft.bruehzeitVon = v; } })),
+      field('Brühzeit bis (Sek.)', numberInput({ value: draft.bruehzeitBis, min: 1, onInput: (v) => { draft.bruehzeitBis = v; } })),
     ]));
   }
 
@@ -116,8 +143,8 @@ function render(ui) {
     rows.push(el('div', {}, [
       el('h6', { style: 'margin:8px 0;' }, 'Pour-Stufen'),
       ...draft.pourStufen.map(s => el('div', { class: 'stage-row' }, [
-        field('Kumuliert %', numberInput({ value: s.prozent, onInput: (v) => { s.prozent = v; } })),
-        field('Zeitpunkt (Sek.)', numberInput({ value: s.zeitpunktSek, onInput: (v) => { s.zeitpunktSek = v; } })),
+        field('Kumuliert %', numberInput({ value: s.prozent, min: 1, max: 100, onInput: (v) => { s.prozent = v; } })),
+        field('Zeitpunkt (Sek.)', numberInput({ value: s.zeitpunktSek, min: 1, onInput: (v) => { s.zeitpunktSek = v; } })),
         el('button', { class: 'stage-remove', type: 'button', 'aria-label': 'Stufe entfernen', onclick: () => removeStufe(s.id) }, '×'),
       ])),
       el('button', { class: 'btn btn-ghost', type: 'button', onclick: addStufe }, '+ Stufe hinzufügen'),
@@ -129,6 +156,13 @@ function render(ui) {
   const save = (e) => {
     e.preventDefault();
     if (!draft.name.trim()) return;
+    const errors = validateDraft(draft);
+    if (errors.length) {
+      ui.variantFormError = errors[0];
+      rerender();
+      return;
+    }
+    ui.variantFormError = null;
     const fields = {
       kategorie: draft.kategorie,
       name: draft.name.trim(),
@@ -166,6 +200,7 @@ function render(ui) {
     el('h2', { class: 'screen-title' }, editing ? 'Variante bearbeiten' : 'Neue Variante'),
     el('div', { class: 'stack' }, [
       ...rows,
+      ui.variantFormError ? el('div', { class: 'form-error', role: 'alert' }, ui.variantFormError) : null,
       el('button', { class: 'btn btn-primary btn-block', type: 'submit' }, editing ? 'Speichern' : 'Anlegen'),
       editing ? el('button', { class: 'btn btn-secondary btn-block', type: 'button', onclick: del }, 'Löschen') : null,
     ]),

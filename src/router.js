@@ -51,14 +51,20 @@ export function rerender() {
   render();
 }
 
+let lastRenderedScreen = null;
+
 export function render() {
   const app = document.getElementById('app');
   app.innerHTML = '';
   const name = currentScreen();
+  const sameScreenAsBefore = name === lastRenderedScreen;
+  lastRenderedScreen = name;
   const renderFn = screens[name];
   if (!renderFn) {
     app.appendChild(el('div', { class: 'screen px-20' }, 'Unbekannter Screen: ' + name));
     return;
   }
-  app.appendChild(renderFn(ui));
+  const node = renderFn(ui);
+  if (sameScreenAsBefore) node.classList.add('no-anim');
+  app.appendChild(node);
 }

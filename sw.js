@@ -1,9 +1,16 @@
-const CACHE = 'kaffee-shell-v1';
+// Bei jeder Änderung an SHELL-Assets diesen Namen hochzählen, sonst bleiben Nutzer auf altem Cache.
+const CACHE = 'kaffee-shell-v5';
 
 const SHELL = [
   './',
   './index.html',
   './manifest.json',
+  './src/v2/app.css',
+  './src/v2/app.js',
+  './src/v2/components.js',
+  './src/v2/model.js',
+  './src/v2/store.js',
+  './src/v2/icons.js',
   './src/styles.css',
   './src/app.css',
   './src/app.js',
@@ -38,7 +45,10 @@ const SHELL = [
   './src/fonts/archivo-800.woff2',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/icon-512-maskable.png',
   './icons/apple-touch-icon-180.png',
+  './icons/apple-touch-icon-167.png',
+  './icons/apple-touch-icon-152.png',
   './icons/favicon-32.png',
 ];
 
@@ -51,19 +61,22 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k.startsWith('kaffee-shell-') && k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+  if (new URL(event.request.url).origin !== self.location.origin) return;
   event.respondWith(
     caches.match(event.request).then((hit) => {
       if (hit) return hit;
       return fetch(event.request).then((res) => {
-        const clone = res.clone();
-        caches.open(CACHE).then((cache) => cache.put(event.request, clone));
+        if (res.ok) {
+          const clone = res.clone();
+          event.waitUntil(caches.open(CACHE).then((cache) => cache.put(event.request, clone)));
+        }
         return res;
       }).catch(() => hit);
     })

@@ -2,6 +2,9 @@
 // Mahlgrad, Temperatur und Zeit skalieren NIE mit der Zielmenge — nur Bohnen/Wasser/Bloom/Eis/Pour-Stufen.
 
 export function calcVariant(variante, zielmenge, mahlgradOverride) {
+  if (!Number.isFinite(variante.ratio) || variante.ratio <= 0) {
+    throw new Error('Ungültige Ratio: ' + variante.ratio);
+  }
   const coffee = zielmenge / variante.ratio;
   const mahlgrad = mahlgradOverride || variante.mahlgrad;
 
@@ -27,12 +30,14 @@ export function calcVariant(variante, zielmenge, mahlgradOverride) {
 
   let prevCum = bloomAmt;
   const pourStufen = variante.felder.pourStufen
-    ? (variante.pourStufen || []).map(stufe => {
-        const cum = heissWasser * (stufe.prozent / 100);
-        const incrementalAmt = cum - prevCum;
-        prevCum = cum;
-        return { ...stufe, cumAmt: cum, incrementalAmt };
-      })
+    ? [...(variante.pourStufen || [])]
+        .sort((a, b) => a.prozent - b.prozent)
+        .map(stufe => {
+          const cum = heissWasser * (stufe.prozent / 100);
+          const incrementalAmt = cum - prevCum;
+          prevCum = cum;
+          return { ...stufe, cumAmt: cum, incrementalAmt };
+        })
     : [];
 
   return {

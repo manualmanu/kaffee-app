@@ -1,0 +1,15 @@
+{
+  "name": "kaffee-pwa",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node tools/verify-calc.mjs && node --test tools/v2-model.test.mjs",
+    "test:e2e": "node tools/v2-e2e.mjs",
+    "test:pwa": "node tools/v2-e2e.mjs --pwa",
+    "test:deploy": "node tools/deploy-check.mjs",
+    "gen-icons": "node tools/gen-icons.mjs"
+  },
+  "devDependencies": {
+    "playwright": "^1.47.0"
+  }
+}

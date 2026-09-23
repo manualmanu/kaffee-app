@@ -2,11 +2,20 @@ import { STORAGE_KEY } from './constants.js';
 import { seedBohnen, seedRezeptVarianten } from './seedData.js';
 import { genId, nowIso } from './id.js';
 
+function isValidShape(d) {
+  return d && Array.isArray(d.bohnen) && Array.isArray(d.rezeptVarianten)
+    && Array.isArray(d.bohneVarianteEinstellungen) && Array.isArray(d.tastings);
+}
+
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) return JSON.parse(raw);
-  } catch (e) {}
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (isValidShape(parsed)) return parsed;
+      console.error('Gespeicherte Daten haben ein ungültiges Format, falle auf Seed-Daten zurück.');
+    }
+  } catch (e) { console.error('Fehler beim Laden aus localStorage:', e); }
   const seeded = {
     version: 1,
     rezeptVarianten: seedRezeptVarianten(),
@@ -19,7 +28,7 @@ function load() {
 }
 
 function persist(d) {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (e) {}
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(d)); } catch (e) { console.error('Fehler beim Speichern in localStorage:', e); }
 }
 
 let data = load();
