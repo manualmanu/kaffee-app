@@ -128,9 +128,21 @@ export function validateData(data) {
   return data;
 }
 
+// Removes float artifacts from scaling (119.99999… g) before persisting; the last pour absorbs the rounding.
+const cents = n => Math.round(n * 100) / 100;
+export function normalizeRecipe(recipe) {
+  const r = clone(recipe);
+  for (const key of ['coffee', 'water', 'ice']) r[key] = cents(r[key]);
+  r.steps.forEach(step => { step.amount = cents(step.amount); });
+  if (r.steps.length) {
+    const last = r.steps.at(-1);
+    last.amount = cents(r.water - r.steps.slice(0, -1).reduce((n, s) => n + s.amount, 0));
+  }
+  return r;
+}
 export function makeBrew(recipe, bean = null) {
-  validateRecipe(recipe);
+  const r = validateRecipe(normalizeRecipe(recipe));
   if (bean) validateBean(bean);
-  return { id: id(), recipeId: recipe.id, completedAt: now(), recipe: clone(recipe), bean: clone(bean), rating: emptyRating() };
+  return { id: id(), recipeId: r.id, completedAt: now(), recipe: r, bean: clone(bean), rating: emptyRating() };
 }
 export const parseBackup = json => clone(validateData(JSON.parse(json)));

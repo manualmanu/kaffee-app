@@ -58,17 +58,17 @@ export function recipeEditor(recipe, { metadata = false, changed = () => {} } = 
   const stepStatus = el('span', { class: 'step-status', 'aria-live': 'polite' });
   const modes = new Map();
   const notify = () => { updateStatus(); changed(); };
-  const round = n => Number.isFinite(n) ? Number(n.toFixed(4)) : '';
+  const round = n => Number.isFinite(n) ? Number(n.toFixed(2)) : '';
   function bind(key, label, aria, unit, options = {}) {
-    const control = number(recipe[key], value => { recipe[key] = value; notify(); }, { 'aria-label': aria, placeholder: '–', ...options });
-    bindings.push(() => { control.value = recipe[key] ?? ''; });
+    const control = number(round(recipe[key]), value => { recipe[key] = value; notify(); }, { 'aria-label': aria, placeholder: '–', ...options });
+    bindings.push(() => { control.value = round(recipe[key]); });
     return field(label, control, { unit });
   }
   const coffee = number(coffeeValue(recipe.coffee), value => { recipe.coffee = value; refreshRatio(); notify(); }, { required: true, min: 0.1, step: 0.1, 'aria-label': 'Kaffee (g)' });
-  const water = number(recipe.water, value => {
+  const water = number(round(recipe.water), value => {
     setWater(recipe, value ?? 0); refreshRatio(); renderSteps(); notify();
   }, { required: true, min: 0, 'aria-label': 'Wasser (g / ca. ml)' });
-  const ice = number(recipe.ice, value => { recipe.ice = value ?? 0; refreshRatio(); notify(); }, { required: true, 'aria-label': 'Eis (g)' });
+  const ice = number(round(recipe.ice), value => { recipe.ice = value ?? 0; refreshRatio(); notify(); }, { required: true, 'aria-label': 'Eis (g)' });
   const ratioInput = number(ratio(recipe), value => {
     if (value > 0) { setRatio(recipe, value); coffee.value = coffeeValue(recipe.coffee); notify(); }
   }, { min: 0.1, step: 0.1, required: true, 'aria-label': 'Verhältnis 1 :' });
@@ -84,7 +84,7 @@ export function recipeEditor(recipe, { metadata = false, changed = () => {} } = 
     stepsHost.replaceChildren(...recipe.steps.map((step, index) => {
       const mode = modes.get(step.id) || 'add';
       const before = () => recipe.steps.slice(0, index).reduce((n, s) => n + s.amount, 0);
-      const amount = number(mode === 'add' ? step.amount : before() + step.amount, value => {
+      const amount = number(round(mode === 'add' ? step.amount : before() + step.amount), value => {
         step.amount = mode === 'add' ? value : (value ?? 0) - before();
         notify();
         // Update later cumulative inputs without moving focus or the caret.

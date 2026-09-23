@@ -1,5 +1,5 @@
 import { el } from '../dom.js';
-import { METHODS, clone, id, makeBrew, newRecipe, parseBackup, ratio, scaleRecipe, total, validateBean, validateRecipe } from './model.js';
+import { METHODS, clone, id, makeBrew, newRecipe, normalizeRecipe, parseBackup, ratio, scaleRecipe, total, validateBean, validateRecipe } from './model.js';
 import { icon } from './icons.js';
 import { createStore } from './store.js';
 import { button, errorBox, field, fmt, fmtRatio, hint, iconButton, input, number, recipeEditor, recipeSummary, segmented, select, shortDate, showError, stamp, steepLabel, stepList, stepSchedule, textarea, time } from './components.js';
@@ -125,7 +125,7 @@ function recipeEdit(view) {
     event.preventDefault();
     attempt(error, () => {
       view.recipe.name = view.recipe.name.trim();
-      validateRecipe(view.recipe);
+      view.recipe = validateRecipe(normalizeRecipe(view.recipe));
       store.change(data => {
         const i = data.recipes.findIndex(r => r.id === view.recipe.id);
         if (i < 0) data.recipes.push(clone(view.recipe)); else data.recipes[i] = clone(view.recipe);
@@ -185,14 +185,11 @@ function brew(view) {
         const i = data.recipes.findIndex(recipe => recipe.id === r.id);
         // Keep current recipe metadata when repeating a historical snapshot.
         const { name, source } = data.recipes[i];
-        data.recipes[i] = { ...clone(r), name, source };
+        data.recipes[i] = { ...normalizeRecipe(r), name, source };
       });
       toast('Ins Rezept übernommen'); refresh(true);
     }), 'link-button')] : []));
   }
-  const beans = store.data.beans.filter(b => !b.archived || b.id === view.beanId);
-  const beanSelect = select(view.beanId, [['', 'Ohne Bohne'], ...beans.map(b => [b.id, b.name + (b.archived ? ' (archiviert)' : '')])],
-    value => { view.beanId = value; view.dirty = true; refreshLast(); }, { 'aria-label': 'Bohnen wählen' });
   function refreshLast() {
     const last = view.beanId ? brewList(r.id).find(b => b.bean?.id === view.beanId) : null;
     lastHost.replaceChildren(...(last ? [button(['Letzten Versuch übernehmen', el('span', { class: 'muted' }, shortDate(last.completedAt))], () => {
@@ -222,10 +219,7 @@ function brew(view) {
     el('section', { class: 'card' }, [summary,
       el('details', { class: 'adjust' }, [el('summary', {}, [icon('edit'), 'Werte anpassen']), editor.node]),
     ]),
-    el('div', { class: 'card bean-row' }, [icon('beans', 'bean-icon'), beanSelect, iconButton('plus', 'Bohne anlegen', () => {
-      // Keep the preparation draft while adding a bean; return directly after saving.
-      go({ page: 'beanEdit', bean: freshBean(), returnBrew: view }, true);
-    })]),
+    beanRow(view, refreshLast),
     lastHost, changes, applyHost, error,
   ]));
   refresh(); refreshLast();
@@ -240,14 +234,22 @@ function brew(view) {
   };
 }
 
+function beanRow(view, changed = () => {}) {
+  const beans = store.data.beans.filter(b => !b.archived || b.id === view.beanId);
+  const beanSelect = select(view.beanId, [['', 'Ohne Bohne'], ...beans.map(b => [b.id, b.name + (b.archived ? ' (archiviert)' : '')])],
+    value => { view.beanId = value; view.dirty = true; changed(); }, { 'aria-label': 'Bohnen wählen' });
+  return el('div', { class: 'card bean-row' }, [icon('beans', 'bean-icon'), beanSelect, iconButton('plus', 'Bohne anlegen', () => {
+    // Keep the current draft while adding a bean; return directly after saving.
+    go({ page: 'beanEdit', bean: freshBean(), returnTo: view }, true);
+  })]);
+}
+
 function run(view) {
   const b = view.brew;
   const r = b.recipe;
   const error = errorBox();
   const cold = r.method === 'coldbrew';
   const bean = store.data.beans.find(x => x.id === b.beanId);
-  const facts = [`${fmt(Number(r.coffee.toFixed(1)))} g Kaffee`, `${fmt(r.water)} g Wasser`, r.method === 'iced' ? `${fmt(r.ice)} g Eis` : null,
-    grindText(r), r.temperature !== null ? `${fmt(r.temperature)} °C` : null].filter(Boolean);
   const finish = button(['Fertig', icon('check')], () => attempt(error, () => {
     const saved = makeBrew(r, bean || null);
     store.change(data => { data.brews.unshift(saved); });
@@ -257,10 +259,8 @@ function run(view) {
   return {
     kicker: METHODS[r.method].label, title: cold ? 'Ansetzen' : 'Brühen',
     body: [
-      el('ul', { class: 'facts', 'aria-label': 'Einstellungen' }, facts.map(f => el('li', {}, f))),
-      cold ? el('section', { class: 'card steep-card' }, [el('span', { class: 'label' }, 'Ziehzeit'), el('strong', {}, steepLabel(r)), bean ? hint(bean.name) : null])
+      cold ? el('section', { class: 'card steep-card' }, [el('span', { class: 'label' }, 'Ziehzeit'), el('strong', {}, steepLabel(r))])
         : timerPanel(b.timer, r),
-      r.method === 'iced' && r.steps.length ? hint(`${fmt(r.ice)} g Eis ins Gefäss, dann Waage tarieren.`) : null,
       r.notes ? el('p', { class: 'recipe-notes' }, r.notes) : null,
       error,
     ],
@@ -343,6 +343,7 @@ function rating(view) {
   const brew = store.data.brews.find(b => b.id === view.brewId);
   if (!brew) return { title: 'Versuch nicht gefunden', body: [] };
   const draft = view.rating || (view.rating = clone(brew.rating));
+  view.beanId ??= brew.bean?.id || '';
   const error = errorBox();
   const choices = (label, key, options) => el('fieldset', { class: 'rating-group' }, [
     el('legend', {}, label),
@@ -354,7 +355,11 @@ function rating(view) {
   const form = el('form', { id: 'rating-form', class: 'card rating-card', onsubmit: event => {
     event.preventDefault();
     attempt(error, () => {
-      store.change(data => { data.brews.find(b => b.id === brew.id).rating = clone(draft); });
+      store.change(data => {
+        const target = data.brews.find(b => b.id === brew.id);
+        target.rating = clone(draft);
+        if ((target.bean?.id || '') !== view.beanId) target.bean = clone(data.beans.find(b => b.id === view.beanId) || null);
+      });
       view.dirty = false;
       notice = 'Bewertung gespeichert';
       if (view.fromBrew) resetTo([views[0]]); else back(true);
@@ -368,16 +373,16 @@ function rating(view) {
   ]);
   const r = brew.recipe;
   return {
-    kicker: stamp(brew.completedAt), title: r.name, meta: el('p', { class: 'muted' }, brew.bean?.name || 'Ohne Bohne'), noBack: view.fromBrew,
+    kicker: stamp(brew.completedAt), title: r.name, noBack: view.fromBrew,
     actions: view.fromBrew ? [button('Später', () => resetTo([views[0]]), 'text-button')]
       : [iconButton('repeat', 'Wiederholen', () => openBrew(r, brew.bean?.id || '', r))],
     body: [
-      el('h2', { class: 'section-title' }, 'Wie war er?'), form,
+      beanRow(view), el('h2', { class: 'section-title' }, 'Wie war er?'), form,
       el('details', { class: 'card adjust' }, [el('summary', {}, 'Verwendete Werte'), el('div', { class: 'stack' }, [
         recipeSummary(r), r.steps.length ? stepList(r) : null, r.notes ? el('p', { class: 'recipe-notes' }, r.notes) : null,
       ])]),
     ],
-    cta: cta('Bewertung speichern', { form: 'rating-form' }),
+    cta: cta('Speichern', { form: 'rating-form' }),
   };
 }
 
@@ -411,7 +416,7 @@ function beanEdit(view) {
       store.change(data => { const i = data.beans.findIndex(bean => bean.id === b.id); if (i < 0) data.beans.push(clone(b)); else data.beans[i] = clone(b); });
       view.dirty = false;
       notice = 'Bohne gespeichert';
-      if (view.returnBrew) { view.returnBrew.beanId = b.id; view.returnBrew.dirty = true; }
+      if (view.returnTo) { view.returnTo.beanId = b.id; view.returnTo.dirty = true; }
       back(true);
     });
   } }, [

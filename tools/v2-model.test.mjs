@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { clone, emptyData, id, makeBrew, newRecipe, parseBackup, ratio, scaleRecipe, setRatio, setWater, validateData, validateRecipe } from '../src/v2/model.js';
+import { clone, emptyData, id, makeBrew, newRecipe, normalizeRecipe, parseBackup, ratio, scaleRecipe, setRatio, setWater, validateData, validateRecipe } from '../src/v2/model.js';
 import { createStore, LEGACY_KEY, STORAGE_KEY } from '../src/v2/store.js';
 
 function recipe(method = 'iced') {
@@ -22,6 +22,13 @@ test('220 → 330 scales ingredients and pours, preserving times and settings', 
   assert.deepEqual(scaled.steps.map(s => s.amount), [60, 120]);
   assert.equal(scaled.steps[0].timing.seconds, 30); assert.equal(scaled.grind, 24); assert.equal(scaled.temperature, 94);
   assert.equal(original.water, 120); validateRecipe(scaled);
+});
+test('normalizing removes float artifacts and keeps pours summing to water', () => {
+  const r = scaleRecipe(recipe(), 333);
+  r.water = 119.99999999999; r.steps[0].amount = 39.999999999; r.steps[1].amount = 80.00000000000;
+  const n = normalizeRecipe(r);
+  assert.equal(n.water, 120); assert.deepEqual(n.steps.map(s => s.amount), [40, 80]);
+  validateRecipe(n);
 });
 test('ratio includes ice and changes only coffee', () => {
   const r = recipe(); setRatio(r, 15);

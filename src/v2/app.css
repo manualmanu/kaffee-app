@@ -26,7 +26,7 @@ svg { flex: 0 0 auto; width: 20px; height: 20px; }
 [hidden] { display: none !important; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
 .muted { color: var(--muted); font-size: 14px; }
-input[type=number], output, .stats, .steps, .row-date, .facts { font-variant-numeric: tabular-nums; }
+input[type=number], output, .stats, .steps, .row-date { font-variant-numeric: tabular-nums; }
 
 /* Shell: one sticky bar for orientation, content, optional tab bar on top-level pages. */
 .app-shell { max-width: 560px; margin: 0 auto; padding: 0 20px calc(24px + var(--safe-bottom)); min-height: 100dvh; display: flex; flex-direction: column; }
@@ -119,6 +119,9 @@ input, select, textarea { width: 100%; min-width: 0; min-height: 44px; padding: 
 select { appearance: none; -webkit-appearance: none; padding-right: 32px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236c6d67' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 10px center / 16px; }
 input:focus, select:focus, textarea:focus { border-color: var(--ink); outline: none; }
 input::placeholder, textarea::placeholder { color: var(--faint); }
+/* iOS gives native date inputs an intrinsic width that ignores the grid column. */
+input[type=date] { -webkit-appearance: none; appearance: none; display: block; max-width: 100%; text-align: left; }
+input[type=date]::-webkit-date-and-time-value { text-align: left; margin: 0; }
 textarea { resize: vertical; min-height: 64px; }
 .affix-box { display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-sm); transition: border-color 160ms var(--ease); min-width: 0; }
 .affix-box:focus-within { border-color: var(--ink); }
@@ -184,8 +187,6 @@ details.card.adjust { border-top: 0; }
 .recipe-notes { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 14px; color: var(--muted); padding: 0 4px; }
 
 /* Brew: run */
-.facts { display: flex; flex-wrap: wrap; gap: 6px; padding: 0; list-style: none; }
-.facts li { padding: 5px 10px; border-radius: 999px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); font-size: 13px; }
 .timer { background: var(--ink); color: var(--bg); border-radius: 20px; padding: 20px 20px 16px; display: grid; gap: 4px; }
 .timer-value { font-size: 76px; line-height: 1; font-weight: 400; letter-spacing: -.05em; }
 .timer-now { min-height: 20px; font-size: 14px; color: #c9cac2; }

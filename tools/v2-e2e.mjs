@@ -129,6 +129,16 @@ try {
     await click('Später'); await heading('Brühen');
     await shot('home');
     await nav('Verlauf');
+    // The bean of a saved attempt can be changed afterwards.
+    const beanId = (await state()).beans[0].id;
+    await page.locator('.list-row').first().click();
+    await page.getByLabel('Bohnen wählen', { exact: true }).selectOption('');
+    await click('Speichern'); await heading('Verlauf');
+    assert.equal((await state()).brews[0].bean, null);
+    await page.locator('.list-row').first().click();
+    await page.getByLabel('Bohnen wählen', { exact: true }).selectOption(beanId);
+    await click('Speichern'); await heading('Verlauf');
+    assert.equal((await state()).brews[0].bean.id, beanId);
     await page.locator('.list-row').first().click();
     await click('Wiederholen');
     await page.getByText('Werte anpassen', { exact: true }).click();
@@ -142,7 +152,7 @@ try {
     await page.getByRole('group', { name: 'Säure', exact: true }).getByRole('button', { name: 'passend', exact: true }).click();
     await page.getByRole('group', { name: 'Bitterkeit', exact: true }).getByRole('button', { name: 'zu viel', exact: true }).click();
     await page.getByLabel('Notiz (optional)', { exact: true }).fill('Nächstes Mal etwas gröber.');
-    await click('Bewertung speichern'); await heading('Brühen');
+    await click('Speichern'); await heading('Brühen');
     let data = await state();
     assert.equal(data.brews.length, 2); assert.equal(data.brews[0].recipe.grind, 22); assert.equal(data.brews[1].recipe.grind, 24);
     assert.equal(data.recipes[0].grind, 24); assert.equal(data.brews[0].rating.bitterness, 'zu viel'); assert.equal(data.brews[0].rating.acidity, 'passend');
